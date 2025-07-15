@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Color Name Finder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .copy-alert {
+            display: none;
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background-color: #000;
+            color: #fff;
+            padding: 2px 6px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        input:focus {
+            outline: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-6 font-sans">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🎨 Generate Color Name</h1>
+
+        <div id="colorInputs" class="space-y-3">
+            <div class="flex gap-3 items-center">
+                <input type="text" value=""
+                    class="color-field w-full p-3 rounded border border-gray-300 focus:outline-none"
+                    placeholder="#141414">
+                <button class="delete-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="#fd4949"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-trash2-icon lucide-trash-2">
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-4">
+            <button id="addColorBtn" class="bg-white border px-4 py-2 rounded hover:bg-gray-50">+ Add Color</button>
+            <button id="fetchBtn" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">🎁 Get Color
+                Name</button>
+        </div>
+
+        <div id="result" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6"></div>
+
+        <div class="mt-10 border-b flex gap-6 text-sm font-medium">
+            <button class="tablink border-b-2 border-black pb-2" data-tab="css">CSS</button>
+            <button class="tablink pb-2" data-tab="tailwind3">Tailwind 3</button>
+            <button class="tablink pb-2" data-tab="tailwind4">Tailwind 4</button>
+            <button class="tablink pb-2" data-tab="token">Tokens</button>
+
+            <div class="ml-auto">
+                <label for="formatSelect" class="mr-2">Format</label>
+                <select id="formatSelect" class="p-1 text-sm border rounded">
+                    <option value="hex">HEX</option>
+                    <option value="rgba">RGBA</option>
+                    <option value="hsl">HSL</option>
+                    <option value="oklch">OKLCH</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div id="css" class="tabcontent">
+                <div class="relative">
+                    <pre id="cssVars" class="bg-white p-4 text-sm font-mono rounded-md border overflow-x-auto"></pre>
+                    <button onclick="copyToClipboard(this, 'cssVars')"
+                        class="copy-btn absolute top-2 right-2 bg-black text-white text-xs px-3 py-1 rounded hidden">Copy</button>
+                </div>
+            </div>
+
+            <div id="tailwind3" class="tabcontent hidden">
+                <div class="relative">
+                    <pre id="tw3" class="bg-white p-4 text-sm font-mono rounded-md border overflow-x-auto"></pre>
+                    <button onclick="copyToClipboard(this, 'tw3')"
+                        class="copy-btn absolute top-2 right-2 bg-black text-white text-xs px-3 py-1 rounded hidden">Copy</button>
+                </div>
+            </div>
+
+            <div id="tailwind4" class="tabcontent hidden">
+                <div class="relative">
+                    <pre id="tw4" class="bg-white p-4 text-sm font-mono rounded-md border overflow-x-auto"></pre>
+                    <button onclick="copyToClipboard(this, 'tw4')"
+                        class="copy-btn absolute top-2 right-2 bg-black text-white text-xs px-3 py-1 rounded hidden">Copy</button>
+                </div>
+            </div>
+
+            <div id="token" class="tabcontent hidden">
+                <div class="relative">
+                    <pre id="tokens" class="bg-white p-4 text-sm font-mono rounded-md border overflow-x-auto"></pre>
+                    <button onclick="copyToClipboard(this, 'tokens')"
+                        class="copy-btn absolute top-2 right-2 bg-black text-white text-xs px-3 py-1 rounded hidden">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll(".tablink");
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                document.querySelectorAll(".tabcontent").forEach(el => el.classList.add("hidden"));
+                tabs.forEach(t => t.classList.remove("border-b-2", "border-black"));
+                document.getElementById(tab.dataset.tab).classList.remove("hidden");
+                tab.classList.add("border-b-2", "border-black");
+                updateFormatOutput();
+            });
+        });
+
+        function copyToClipboard(btn, id) {
+            const text = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(text);
+            const original = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = original, 1000);
+        }
+
+        const addColorBtn = document.getElementById("addColorBtn");
+        const colorInputs = document.getElementById("colorInputs");
+        const fetchBtn = document.getElementById("fetchBtn");
+        const result = document.getElementById("result");
+        const formatSelect = document.getElementById("formatSelect");
+
+        const cssVars = document.getElementById("cssVars");
+        const tw3 = document.getElementById("tw3");
+        const tw4 = document.getElementById("tw4");
+        const tokens = document.getElementById("tokens");
+
+        let lastFetchedColors = [];
+
+        const toRGBA = ({ r, g, b }) => `rgba(${r}, ${g}, ${b}, 1)`;
+        const toHSL = ({ r, g, b }) => {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) h = s = 0;
+            else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+        };
+        const toOKLCH = ({ r, g, b }) => `oklch(0.6 0 0)`;
+        const convertColor = (rgb, format) => {
+            switch (format) {
+                case 'rgba': return toRGBA(rgb);
+                case 'hsl': return toHSL(rgb);
+                case 'oklch': return toOKLCH(rgb);
+                default:
+                    return `#${((1 << 24) + (rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16).slice(1).toUpperCase()}`;
+            }
+        };
+
+        function updateFormatOutput() {
+            if (!lastFetchedColors.length) return;
+            const format = formatSelect.value;
+            let vars = [], tail3 = [], tail4 = [], token = [];
+            lastFetchedColors.forEach(color => {
+                const value = convertColor(color.rgb, format);
+                const name = color.name.toLowerCase().replace(/\s+/g, '-');
+                vars.push(`--${name}: ${value};`);
+                tail3.push(`${name}: '${value}',`);
+                tail4.push(`'${name}': '${value}',`);
+                token.push(`{ name: '${name}', value: '${value}' }`);
+            });
+            cssVars.textContent = `:root {\n  ${vars.join('\n  ')}\n}`;
+            tw3.textContent = `theme: { extend: { colors: {\n  ${tail3.join('\n  ')}\n} } }`;
+            tw4.textContent = `{
+  ${tail4.join('\n  ')}
+}`;
+            tokens.textContent = `[
+  ${token.join(',\n  ')}
+]`;
+            document.querySelectorAll('.copy-btn').forEach(btn => btn.classList.remove('hidden'));
+        }
+
+        fetchBtn.addEventListener("click", async () => {
+            const inputs = document.querySelectorAll(".color-field");
+            const hexValues = Array.from(inputs)
+                .map(input => input.value.trim().replace(/^#/, '').toUpperCase())
+                .filter(code => /^[0-9A-F]{6}$/.test(code));
+
+            if (hexValues.length === 0) {
+                alert("Masukkan minimal satu warna HEX valid.");
+                return;
+            }
+
+            const res = await fetch(`https://api.color.pizza/v1/?values=${hexValues.join(',')}`);
+            const data = await res.json();
+            lastFetchedColors = data.colors;
+
+            result.innerHTML = "";
+            data.colors.forEach(color => {
+                const div = document.createElement("div");
+                div.className = "rounded shadow p-4 bg-white flex flex-col items-center relative card cursor-pointer";
+                div.innerHTML = `
+                    <div class="copy-alert">Copied!</div>
+                    <div class="w-full h-24 rounded mb-3" style="background-color: ${color.hex};"></div>
+                    <p class="font-semibold text-center text-sm">${color.name}</p>
+                    <p class="text-xs text-gray-600">${color.requestedHex}</p>
+                    <p class="text-xs text-gray-600">rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})</p>
+                `;
+                div.addEventListener("click", () => {
+                    navigator.clipboard.writeText(color.name);
+                    const alert = div.querySelector(".copy-alert");
+                    alert.style.display = "block";
+                    setTimeout(() => { alert.style.display = "none"; }, 1000);
+                });
+                result.appendChild(div);
+            });
+
+            updateFormatOutput();
+        });
+
+        colorInputs.addEventListener("click", (e) => {
+            if (e.target.closest(".delete-btn")) {
+                e.target.closest(".flex").remove();
+            }
+        });
+
+        addColorBtn.addEventListener("click", () => {
+            const row = document.createElement("div");
+            row.className = "flex gap-3 items-center";
+            row.innerHTML = `
+                <input type="text" class="color-field w-full p-3 rounded border border-gray-300" placeholder="#ADADAD">
+                <button class="delete-btn"> 
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="#fd4949" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            `;
+            colorInputs.appendChild(row);
+        });
+
+        formatSelect.addEventListener("change", updateFormatOutput);
+    </script>
+</body>
+
+</html>
